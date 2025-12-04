@@ -1,5 +1,5 @@
 #
-# import pytest
+import pytest
 from unittest.mock import MagicMock, patch
 from worker import WorkerService
 from models import JobStatus
