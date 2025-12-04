@@ -1,5 +1,6 @@
 """
 Main FastAPI application for the Multilingual Text Intelligence Service.
+
 """
 import logging
 from datetime import datetime

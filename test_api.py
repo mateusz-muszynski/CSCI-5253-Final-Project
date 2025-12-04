@@ -1,6 +1,7 @@
 """
 Simple test script to verify API functionality.
 Run this after starting the API service locally.
+
 """
 import requests
 import json

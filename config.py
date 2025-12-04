@@ -1,5 +1,6 @@
 """
 Configuration management for the Multilingual Text Intelligence Service.
+
 """
 import os
 from typing import Optional

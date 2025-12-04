@@ -1,6 +1,7 @@
 """
 Basic setup test - verifies core functionality without requiring GCP authentication.
 This is a simpler test that focuses on what can be verified locally.
+
 """
 import sys
 import os
