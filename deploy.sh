@@ -40,11 +40,26 @@ gcloud services enable \
 
 # Build and deploy API service
 echo -e "${YELLOW}Building API service...${NC}"
-gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-api --file Dockerfile.api .
+# Create temporary build config for API
+cat > /tmp/cloudbuild-api.yaml <<EOF
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/text-intelligence-api:latest'
+    - '-f'
+    - 'Dockerfile.api'
+    - '.'
+images:
+- 'gcr.io/$PROJECT_ID/text-intelligence-api:latest'
+EOF
+
+gcloud builds submit --config /tmp/cloudbuild-api.yaml .
 
 echo -e "${YELLOW}Deploying API service to Cloud Run...${NC}"
 gcloud run deploy text-intelligence-api \
-    --image gcr.io/$PROJECT_ID/text-intelligence-api \
+    --image gcr.io/$PROJECT_ID/text-intelligence-api:latest \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
@@ -54,11 +69,26 @@ gcloud run deploy text-intelligence-api \
 
 # Build and deploy worker service
 echo -e "${YELLOW}Building worker service...${NC}"
-gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-worker --file Dockerfile.worker .
+# Create temporary build config for worker
+cat > /tmp/cloudbuild-worker.yaml <<EOF
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/text-intelligence-worker:latest'
+    - '-f'
+    - 'Dockerfile.worker'
+    - '.'
+images:
+- 'gcr.io/$PROJECT_ID/text-intelligence-worker:latest'
+EOF
+
+gcloud builds submit --config /tmp/cloudbuild-worker.yaml .
 
 echo -e "${YELLOW}Deploying worker service to Cloud Run...${NC}"
 gcloud run deploy text-intelligence-worker \
-    --image gcr.io/$PROJECT_ID/text-intelligence-worker \
+    --image gcr.io/$PROJECT_ID/text-intelligence-worker:latest \
     --platform managed \
     --region $REGION \
     --no-allow-unauthenticated \
@@ -67,6 +97,9 @@ gcloud run deploy text-intelligence-worker \
     --cpu 1 \
     --timeout 3600 \
     --max-instances 10
+
+# Clean up temporary build configs
+rm -f /tmp/cloudbuild-api.yaml /tmp/cloudbuild-worker.yaml
 
 # Get API URL
 API_URL=$(gcloud run services describe text-intelligence-api --region $REGION --format 'value(status.url)')
