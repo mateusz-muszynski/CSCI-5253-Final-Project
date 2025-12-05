@@ -12,6 +12,10 @@ COPY . .
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+
+# Expose port for health checks
+EXPOSE 8080
 
 # Run the worker
 CMD ["python", "worker.py"]

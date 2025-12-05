@@ -2,7 +2,10 @@
 Background worker service for processing asynchronous jobs from Pub/Sub.
 """
 import logging
+import os
+import threading
 from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from config import Config
 from models import JobStatus, ProcessingResult
@@ -88,17 +91,51 @@ class WorkerService:
             raise
 
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Simple health check handler for Cloud Run."""
+    
+    def do_GET(self):
+        """Handle GET requests for health checks."""
+        if self.path == "/health" or self.path == "/":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "healthy", "service": "worker"}')
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        """Suppress default logging."""
+        pass
+
+
+def start_health_server(port: int = 8080):
+    """Start a simple HTTP server for health checks."""
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    logger.info(f"Health check server started on port {port}")
+    server.serve_forever()
+
+
 def main():
     """Main entry point for the worker service."""
     logger.info("Starting worker service...")
     
+    # Start health check server in a separate thread
+    port = int(os.environ.get("PORT", 8080))
+    health_thread = threading.Thread(target=start_health_server, args=(port,), daemon=True)
+    health_thread.start()
+    logger.info(f"Health check server running on port {port}")
+    
+    # Initialize worker
     worker = WorkerService()
     
     def message_callback(message_data: dict):
         """Callback function for Pub/Sub messages."""
         worker.process_job(message_data)
     
-    # Start listening to Pub/Sub
+    # Start listening to Pub/Sub (this blocks)
+    logger.info("Starting Pub/Sub subscriber...")
     subscriber = PubSubSubscriber(message_callback)
     subscriber.start_listening()
 

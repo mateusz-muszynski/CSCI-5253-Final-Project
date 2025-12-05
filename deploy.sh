@@ -40,7 +40,7 @@ gcloud services enable \
 
 # Build and deploy API service
 echo -e "${YELLOW}Building API service...${NC}"
-gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-api
+gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-api --file Dockerfile.api .
 
 echo -e "${YELLOW}Deploying API service to Cloud Run...${NC}"
 gcloud run deploy text-intelligence-api \
@@ -54,7 +54,7 @@ gcloud run deploy text-intelligence-api \
 
 # Build and deploy worker service
 echo -e "${YELLOW}Building worker service...${NC}"
-gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-worker
+gcloud builds submit --tag gcr.io/$PROJECT_ID/text-intelligence-worker --file Dockerfile.worker .
 
 echo -e "${YELLOW}Deploying worker service to Cloud Run...${NC}"
 gcloud run deploy text-intelligence-worker \
@@ -64,7 +64,9 @@ gcloud run deploy text-intelligence-worker \
     --no-allow-unauthenticated \
     --set-env-vars GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID \
     --memory 1Gi \
-    --cpu 1
+    --cpu 1 \
+    --timeout 3600 \
+    --max-instances 10
 
 # Get API URL
 API_URL=$(gcloud run services describe text-intelligence-api --region $REGION --format 'value(status.url)')
