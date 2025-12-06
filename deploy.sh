@@ -64,8 +64,10 @@ gcloud run deploy text-intelligence-api \
     --region $REGION \
     --allow-unauthenticated \
     --set-env-vars GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID \
-    --memory 512Mi \
-    --cpu 1
+    --memory 8Gi \
+    --cpu 2 \
+    --timeout 300 \
+    --max-instances 5
 
 # Build and deploy worker service
 echo -e "${YELLOW}Building worker service...${NC}"
