@@ -49,11 +49,22 @@ try:
     db = Database()
     pubsub = PubSubClient()
     translation_service = TranslationService()
-    nlp_service = NLPService()
-    logger.info("All services initialized successfully")
+    # Lazy initialization for NLP service (loads models on first use)
+    nlp_service = None
+    logger.info("Core services initialized successfully")
 except Exception as e:
     logger.error(f"Error initializing services: {str(e)}")
     raise
+
+
+def get_nlp_service():
+    """Get or initialize NLP service lazily."""
+    global nlp_service
+    if nlp_service is None:
+        logger.info("Initializing NLP service (lazy load)...")
+        nlp_service = NLPService()
+        logger.info("NLP service initialized")
+    return nlp_service
 
 
 @app.get("/")
@@ -108,10 +119,11 @@ async def process_text(request: TextSubmissionRequest):
                     request.text
                 )
                 
-                # Process with NLP services
-                sentiment = nlp_service.analyze_sentiment(translated_text or request.text)
-                summary = nlp_service.summarize(translated_text or request.text)
-                entities = nlp_service.extract_entities(translated_text or request.text)
+                # Process with NLP services (lazy initialization)
+                nlp = get_nlp_service()
+                sentiment = nlp.analyze_sentiment(translated_text or request.text)
+                summary = nlp.summarize(translated_text or request.text)
+                entities = nlp.extract_entities(translated_text or request.text)
                 
                 # Create result
                 result = ProcessingResult(

@@ -16,17 +16,28 @@ class NLPService:
     """
 
     def __init__(self):
-        """Initialize NLP models."""
+        """Initialize NLP models with smaller, memory-efficient models."""
         logger.info("Initializing NLP Service with Hugging Face models...")
 
-        # Sentiment analysis pipeline
-        self.sentiment_model = pipeline("sentiment-analysis")
+        # Use smaller models to reduce memory footprint
+        # Sentiment analysis - using distilbert (smaller, faster)
+        self.sentiment_model = pipeline(
+            "sentiment-analysis",
+            model="distilbert-base-uncased-finetuned-sst-2-english"
+        )
 
-        # Summarization pipeline
-        self.summarizer = pipeline("summarization")
+        # Summarization - using distilbart (much smaller than bart-large)
+        self.summarizer = pipeline(
+            "summarization",
+            model="sshleifer/distilbart-cnn-12-6"
+        )
 
-        # Named Entity Recognition pipeline
-        self.ner_model = pipeline("ner", grouped_entities=True)
+        # Named Entity Recognition - using bert-base (smaller than bert-large)
+        self.ner_model = pipeline(
+            "ner",
+            model="dslim/bert-base-NER",
+            grouped_entities=True
+        )
 
         logger.info("NLP Service initialized successfully")
 
